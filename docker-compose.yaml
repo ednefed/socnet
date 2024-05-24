@@ -1,0 +1,31 @@
+---
+name: social_network
+
+services:
+  postgresql:
+    image: postgres:16.3-alpine
+    environment:
+      POSTGRES_PASSWORD: "postgres"
+    ports:
+      - "5432:5432"
+    volumes:
+      - type: volume
+        source: postgresql_data
+        target: /var/lib/postgresql/data
+      - type: bind
+        source: infrastructure/schema.sql
+        target: /docker-entrypoint-initdb.d/schema.sql
+
+  api:
+    image: socnet/api
+    build:
+      context: api
+      dockerfile: Dockerfile
+    environment:
+      POSTGRESQL_HOST: postgresql
+      ENVIRONMENT: Production
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgresql_data:
