@@ -34,6 +34,13 @@ func main() {
 	}
 
 	log.Printf("Connected to %v:%v/%v as %v", dsnHost, dsnPort, dsnDb, dsnUsername)
+	maxOpenConnections, err := strconv.ParseInt(getEnvVar("POSTGRESQL_MAX_OPEN_CONNECTIONS", "95"), 10, 0)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	db.SetMaxOpenConns(int(maxOpenConnections))
 	tokenLifetime, err = strconv.ParseInt(getEnvVar("TOKEN_LIFETIME", "60"), 10, 64)
 
 	if err != nil {
@@ -50,6 +57,7 @@ func main() {
 	router.POST("/user", signup)
 	router.GET("/user/:id", getUserByID)
 	router.POST("/login", login)
+	router.GET("/user/search", searchUsersByFistAndLastName)
 	serverHost := getEnvVar("SERVER_HOST", "0.0.0.0")
 	serverPort := getEnvVar("SERVER_PORT", "8080")
 	server := fmt.Sprintf("%v:%v", serverHost, serverPort)

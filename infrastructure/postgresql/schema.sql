@@ -10,3 +10,7 @@ create table public.users(
     interests text,
     city varchar(255)
 );
+
+drop index if exists users_first_last_names;
+
+create index users_first_last_names on public.users (first_name varchar_pattern_ops, last_name varchar_pattern_ops);

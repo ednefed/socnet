@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 	"strconv"
@@ -15,16 +16,14 @@ func signup(c *gin.Context) {
 	var user User
 
 	if err := c.BindJSON(&user); err != nil {
-		log.Printf("signUp.BindJSON: %v", err)
-		c.AbortWithStatus(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid data"})
 		return
 	}
 
 	id, err := dbAddUser(user)
 
 	if err != nil {
-		log.Printf("signUp.dbRegisterUser: %v", err)
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
 		return
 	}
 
@@ -33,8 +32,7 @@ func signup(c *gin.Context) {
 
 func getUserByID(c *gin.Context) {
 	if err := verifyToken(c.Request.Header["Authorization"]); err != nil {
-		log.Printf("getUserByID.verifyToken: %v", err)
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
 		return
 	}
 
@@ -42,47 +40,43 @@ func getUserByID(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 
 	if err != nil {
-		log.Printf("getUserByID.ParseInt: %v", err)
-		c.AbortWithStatus(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid parameter"})
 		return
 	}
 
 	user, err := dbGetUserByID(id)
 
 	if err != nil {
-		log.Printf("getUserByID.dbGetUserByID: %v", err)
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{"message": "User not found"})
+			return
+		} else {
+			log.Println(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
+			return
+		}
 	}
 
-	if user.ID == 0 {
-		c.AbortWithStatus(http.StatusNotFound)
-		return
-	} else {
-		c.JSON(http.StatusOK, PrintableUser(user))
-	}
+	c.JSON(http.StatusOK, PrintableUser(user))
 }
 
 func login(c *gin.Context) {
 	var userForAuth User
 
 	if err := c.BindJSON(&userForAuth); err != nil {
-		log.Printf("login.BindJSON: %v", err)
-		c.AbortWithStatus(http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid data"})
 		return
 	}
 
 	userForCompare, err := dbGetUserByID(userForAuth.ID)
 
 	if err != nil {
-		log.Printf("login.dbGetUserByID: %v", err)
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
 		return
 	}
 
 	if userForCompare.ID != userForAuth.ID {
-		log.Printf("login: user '%v' not found", userForAuth.ID)
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid user or password"})
 		return
 	}
 
@@ -90,8 +84,7 @@ func login(c *gin.Context) {
 	password := []byte(userForAuth.Password)
 
 	if err := bcrypt.CompareHashAndPassword(hash, password); err != nil {
-		log.Printf("login.CompareHashAndPassword: %v", err)
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid user or password"})
 		return
 	}
 
@@ -104,9 +97,38 @@ func login(c *gin.Context) {
 
 	if err != nil {
 		log.Printf("login.SignedString: %v", err)
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"token": tokenString})
+}
+
+func searchUsersByFistAndLastName(c *gin.Context) {
+	if err := verifyToken(c.Request.Header["Authorization"]); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
+		return
+	}
+
+	firstName := c.Query("first_name")
+	lastName := c.Query("last_name")
+
+	if len(firstName) == 0 || len(lastName) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid parameters"})
+		return
+	}
+
+	users, err := dbGetUsersByFistAndLastName(firstName, lastName)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{"message": "User not found"})
+			return
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, users)
 }

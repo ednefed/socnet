@@ -6,6 +6,8 @@ services:
     image: postgres:16.3-alpine
     environment:
       POSTGRES_PASSWORD: "postgres"
+    restart: always
+    cpus: 6
     ports:
       - "5432:5432"
     volumes:
@@ -13,8 +15,70 @@ services:
         source: postgresql_data
         target: /var/lib/postgresql/data
       - type: bind
-        source: infrastructure/schema.sql
+        source: infrastructure/postgresql/schema.sql
         target: /docker-entrypoint-initdb.d/schema.sql
+
+  influxdb:
+    image: influxdb:1.8.10
+    restart: always
+    cpus: 0.5
+    ports:
+     - "8086:8086"
+    volumes:
+      - type: bind
+        source: infrastructure/influxdb/influx_init.iql
+        target: /docker-entrypoint-initdb.d/influx_init.iql
+      - type: volume
+        source: influxdb_data
+        target: /var/lib/influxdb
+
+  grafana:
+    image: grafana/grafana:8.5.2
+    depends_on:
+      - influxdb
+    environment:
+      DS_NAME: InfluxDB
+      DS_TYPE: influxdb
+      DS_ACCESS: proxy
+      DS_URL: http://influxdb:8086
+      DS_DB: jmeter_results
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_NAME: Main Org.
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    restart: always
+    cpus: 0.25
+    ports:
+      - "3000:3000"
+    volumes:
+      - type: bind
+        source: infrastructure/grafana/provisioning
+        target: /etc/grafana/provisioning
+
+  telegraf:
+    image: telegraf:1.30-alpine
+    environment:
+      HOST_ETC: /hostfs/etc
+      HOST_PROC: /hostfs/proc
+      HOST_RUN: /hostfs/run
+      HOST_SYS: /hostfs/sys
+      HOST_VAR: /hostfs/var
+      HOST_MOUNT_PREFIX: /hostfs
+    restart: always
+    user: root
+    cpus: 0.25
+    volumes:
+      - type: bind
+        source: infrastructure/telegraf/telegraf.conf
+        target: /etc/telegraf/telegraf.conf
+      - type: bind
+        source: infrastructure/telegraf/net.sh
+        target: /net.sh
+      - type: bind
+        source: /
+        target: /hostfs
+        read_only: true
 
   api:
     image: socnet/api
@@ -24,8 +88,11 @@ services:
     environment:
       POSTGRESQL_HOST: postgresql
       ENVIRONMENT: Production
+    cpus: 1
+    restart: always
     ports:
       - "8080:8080"
 
 volumes:
   postgresql_data:
+  influxdb_data:

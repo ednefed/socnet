@@ -38,3 +38,38 @@ func dbGetUserByID(id int64) (User, error) {
 
 	return user, nil
 }
+
+func dbGetUsersByFistAndLastName(firstName, lastName string) ([]PrintableUser, error) {
+	query := "SELECT id, first_name, last_name, birthdate, gender, interests, city FROM public.users WHERE first_name like $1 || '%' and last_name like $2 || '%'"
+	var users []PrintableUser
+	rows, err := db.Query(query, firstName, lastName)
+
+	if err != nil {
+		log.Printf("dbGetUsersByFistAndLastName.Query: %v", err)
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var user PrintableUser
+
+		if err := rows.Scan(&user.ID, &user.FirstName, &user.LastName, &user.Birthdate, &user.Gender, &user.Interests, &user.City); err != nil {
+			log.Printf("dbGetUsersByFistAndLastName.Scan: %v", err)
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Printf("dbGetUsersByFistAndLastName.rows: %v", err)
+		return nil, err
+	}
+
+	if len(users) == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	return users, nil
+}
