@@ -38,7 +38,7 @@ Planning Time: 1.147 ms
 Execution Time: 36.194 ms
 ```
 
-![throughput](images/throughput-before-index.png)![response time](images/response-time-before-index.png)
+![throughput](images/homework-2/throughput-before-index.png)![response time](images/homework-2/response-time-before-index.png)
 
 На графике throughput видно, что прирост пропускной способности на третьем этапе практически незначителен. Response time при этом в меру нормальный. На четвёртом этапе response time превышает все разумные значения, throughput чуть ниже третьего этапа -- сервис достиг предела.
 
@@ -68,7 +68,7 @@ Execution Time: 1.411 ms
 ```
 В сравнении с первым вариантом, "стоимость" запроса снизилась в 4-5 раз (~4350 против ~19400)
 
-![throughput](images/throughput-after-index.png)![response time](images/response-time-after-index.png)
+![throughput](images/homework-2/throughput-after-index.png)![response time](images/homework-2/response-time-after-index.png)
 
 Throughput в несколько раз выше, чем в первую итерацию. Response time при максимальной нагрузке хоть и тоже высокий, но в несколько раз ниже.
 

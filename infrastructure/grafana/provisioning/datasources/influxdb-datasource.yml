@@ -13,11 +13,6 @@ datasources:
     access: proxy
     database: jmeter_results
     url: http://influxdb:8086
-  - name: collectd
-    type: influxdb
-    access: proxy
-    database: collectd
-    url: http://influxdb:8086
   - name: telegraf
     type: influxdb
     access: proxy

@@ -31,16 +31,13 @@
               "viz": false
             },
             "lineInterpolation": "linear",
-            "lineStyle": {
-              "fill": "solid"
-            },
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
             "showPoints": "auto",
-            "spanNulls": true,
+            "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -49,7 +46,7 @@
               "mode": "off"
             }
           },
-          "decimals": 1,
+          "decimals": 0,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -83,7 +80,7 @@
             "max"
           ],
           "displayMode": "table",
-          "placement": "bottom"
+          "placement": "right"
         },
         "tooltip": {
           "mode": "single",
@@ -92,7 +89,7 @@
       },
       "targets": [
         {
-          "alias": "$col",
+          "alias": "$tag_container_name",
           "datasource": {
             "type": "influxdb",
             "uid": "PE46F8281683B3570"
@@ -100,12 +97,12 @@
           "groupBy": [
             {
               "params": [
-                "10s"
+                "container_name"
               ],
-              "type": "time"
+              "type": "tag"
             }
           ],
-          "measurement": "cpu",
+          "measurement": "docker_container_cpu",
           "orderByTime": "ASC",
           "policy": "default",
           "refId": "A",
@@ -114,37 +111,9 @@
             [
               {
                 "params": [
-                  "usage_idle"
+                  "usage_percent"
                 ],
                 "type": "field"
-              },
-              {
-                "params": [],
-                "type": "mean"
-              },
-              {
-                "params": [
-                  "idle"
-                ],
-                "type": "alias"
-              }
-            ],
-            [
-              {
-                "params": [
-                  "usage_iowait"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [],
-                "type": "mean"
-              },
-              {
-                "params": [
-                  "iowait"
-                ],
-                "type": "alias"
               }
             ]
           ],
@@ -192,166 +161,7 @@
               "mode": "off"
             }
           },
-          "decimals": 2,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 0
-      },
-      "id": 4,
-      "options": {
-        "legend": {
-          "calcs": [
-            "min",
-            "mean",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "alias": "$col",
-          "datasource": {
-            "type": "influxdb",
-            "uid": "PE46F8281683B3570"
-          },
-          "groupBy": [],
-          "measurement": "system",
-          "orderByTime": "ASC",
-          "policy": "default",
-          "refId": "A",
-          "resultFormat": "time_series",
-          "select": [
-            [
-              {
-                "params": [
-                  "load1"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [
-                  " / n_cpus"
-                ],
-                "type": "math"
-              },
-              {
-                "params": [
-                  "1m"
-                ],
-                "type": "alias"
-              }
-            ],
-            [
-              {
-                "params": [
-                  "load5"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [
-                  " / n_cpus"
-                ],
-                "type": "math"
-              },
-              {
-                "params": [
-                  "5m"
-                ],
-                "type": "alias"
-              }
-            ],
-            [
-              {
-                "params": [
-                  "load15"
-                ],
-                "type": "field"
-              },
-              {
-                "params": [
-                  " / n_cpus"
-                ],
-                "type": "math"
-              },
-              {
-                "params": [
-                  "15m"
-                ],
-                "type": "alias"
-              }
-            ]
-          ],
-          "tags": []
-        }
-      ],
-      "title": "CPU load average",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "PE46F8281683B3570"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
+          "decimals": 0,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -373,10 +183,10 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 0,
-        "y": 8
+        "x": 12,
+        "y": 0
       },
-      "id": 6,
+      "id": 4,
       "options": {
         "legend": {
           "calcs": [
@@ -385,7 +195,7 @@
             "max"
           ],
           "displayMode": "table",
-          "placement": "bottom"
+          "placement": "right"
         },
         "tooltip": {
           "mode": "single",
@@ -394,13 +204,20 @@
       },
       "targets": [
         {
-          "alias": "$col",
+          "alias": "$tag_container_name",
           "datasource": {
             "type": "influxdb",
             "uid": "PE46F8281683B3570"
           },
-          "groupBy": [],
-          "measurement": "mem",
+          "groupBy": [
+            {
+              "params": [
+                "container_name"
+              ],
+              "type": "tag"
+            }
+          ],
+          "measurement": "docker_container_mem",
           "orderByTime": "ASC",
           "policy": "default",
           "refId": "A",
@@ -409,15 +226,7 @@
             [
               {
                 "params": [
-                  "total"
-                ],
-                "type": "field"
-              }
-            ],
-            [
-              {
-                "params": [
-                  "available"
+                  "usage"
                 ],
                 "type": "field"
               }
@@ -489,7 +298,7 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
+        "x": 0,
         "y": 8
       },
       "id": 8,
@@ -501,7 +310,7 @@
             "max"
           ],
           "displayMode": "table",
-          "placement": "bottom"
+          "placement": "right"
         },
         "tooltip": {
           "mode": "single",
@@ -510,13 +319,26 @@
       },
       "targets": [
         {
-          "alias": "$col",
+          "alias": "$tag_container_name: $col",
           "datasource": {
             "type": "influxdb",
             "uid": "PE46F8281683B3570"
           },
-          "groupBy": [],
-          "measurement": "disk",
+          "groupBy": [
+            {
+              "params": [
+                "10s"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "container_name"
+              ],
+              "type": "tag"
+            }
+          ],
+          "measurement": "docker_container_blkio",
           "orderByTime": "ASC",
           "policy": "default",
           "refId": "A",
@@ -525,13 +347,23 @@
             [
               {
                 "params": [
-                  "total"
+                  "io_service_bytes_recursive_write"
                 ],
                 "type": "field"
               },
               {
+                "params": [],
+                "type": "mean"
+              },
+              {
                 "params": [
-                  "total"
+                  "10s"
+                ],
+                "type": "derivative"
+              },
+              {
+                "params": [
+                  "write"
                 ],
                 "type": "alias"
               }
@@ -539,28 +371,38 @@
             [
               {
                 "params": [
-                  "free"
+                  "io_service_bytes_recursive_read"
                 ],
                 "type": "field"
               },
               {
+                "params": [],
+                "type": "mean"
+              },
+              {
                 "params": [
-                  "free"
+                  "10s"
+                ],
+                "type": "derivative"
+              },
+              {
+                "params": [
+                  "* -1"
+                ],
+                "type": "math"
+              },
+              {
+                "params": [
+                  "read"
                 ],
                 "type": "alias"
               }
             ]
           ],
-          "tags": [
-            {
-              "key": "path",
-              "operator": "=",
-              "value": "/"
-            }
-          ]
+          "tags": []
         }
       ],
-      "title": "Disk usage: /",
+      "title": "Disc read/write",
       "type": "timeseries"
     },
     {
@@ -623,10 +465,10 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 0,
-        "y": 16
+        "x": 12,
+        "y": 8
       },
-      "id": 10,
+      "id": 6,
       "options": {
         "legend": {
           "calcs": [
@@ -635,7 +477,7 @@
             "max"
           ],
           "displayMode": "table",
-          "placement": "bottom"
+          "placement": "right"
         },
         "tooltip": {
           "mode": "single",
@@ -644,7 +486,7 @@
       },
       "targets": [
         {
-          "alias": "$tag_interface: $col",
+          "alias": "$tag_container_name: $col",
           "datasource": {
             "type": "influxdb",
             "uid": "PE46F8281683B3570"
@@ -658,12 +500,13 @@
             },
             {
               "params": [
-                "interface"
+                "container_name"
               ],
               "type": "tag"
             }
           ],
-          "measurement": "net",
+          "hide": false,
+          "measurement": "docker_container_net",
           "orderByTime": "ASC",
           "policy": "default",
           "refId": "A",
@@ -672,7 +515,7 @@
             [
               {
                 "params": [
-                  "bytes_recv"
+                  "rx_bytes"
                 ],
                 "type": "field"
               },
@@ -696,7 +539,7 @@
             [
               {
                 "params": [
-                  "bytes_sent"
+                  "tx_bytes"
                 ],
                 "type": "field"
               },
@@ -731,6 +574,7 @@
       "type": "timeseries"
     }
   ],
+  "refresh": "10s",
   "schemaVersion": 36,
   "style": "dark",
   "tags": [],
@@ -743,8 +587,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Host metrics",
-  "uid": "byd5iSUIk",
-  "version": 2,
+  "title": "Docker container metrics",
+  "uid": "ZqP8ScUSz",
+  "version": 1,
   "weekStart": ""
 }

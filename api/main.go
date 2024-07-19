@@ -10,37 +10,25 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var db *sql.DB
+var db, db2, db3 *sql.DB
 var secret = []byte("secret")
 var tokenLifetime int64
 
 func main() {
 	dsnHost := getEnvVar("POSTGRESQL_HOST", "localhost")
 	dsnPort := getEnvVar("POSTGRESQL_PORT", "5432")
+	dsnSlave1Host := getEnvVar("POSTGRESQL2_HOST", "localhost")
+	dsnSlave1Port := getEnvVar("POSTGRESQL2_PORT", "5433")
+	dsnSlave2Host := getEnvVar("POSTGRESQL3_HOST", "localhost")
+	dsnSlave2Port := getEnvVar("POSTGRESQL3_PORT", "5434")
 	dsnDb := getEnvVar("POSTGRESQL_DB", "postgres")
 	dsnUsername := getEnvVar("POSTGRESQL_USERNAME", "postgres")
 	dsnPassword := getEnvVar("POSTGRESQL_PASSWORD", "postgres")
 	dsnSslMode := getEnvVar("POSTGRESQL_SSL_MODE", "disable")
-	dsn := fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=%v", dsnUsername, dsnPassword, dsnHost, dsnPort, dsnDb, dsnSslMode)
+	db = connectToDB(dsnHost, dsnPort, dsnDb, dsnUsername, dsnPassword, dsnSslMode)
+	db2 = connectToDB(dsnSlave1Host, dsnSlave1Port, dsnDb, dsnUsername, dsnPassword, dsnSslMode)
+	db3 = connectToDB(dsnSlave2Host, dsnSlave2Port, dsnDb, dsnUsername, dsnPassword, dsnSslMode)
 	var err error
-	db, err = sql.Open("postgres", dsn)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := db.Ping(); err != nil {
-		log.Fatal(err)
-	}
-
-	log.Printf("Connected to %v:%v/%v as %v", dsnHost, dsnPort, dsnDb, dsnUsername)
-	maxOpenConnections, err := strconv.ParseInt(getEnvVar("POSTGRESQL_MAX_OPEN_CONNECTIONS", "95"), 10, 0)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	db.SetMaxOpenConns(int(maxOpenConnections))
 	tokenLifetime, err = strconv.ParseInt(getEnvVar("TOKEN_LIFETIME", "60"), 10, 64)
 
 	if err != nil {
