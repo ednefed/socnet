@@ -1,7 +1,7 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 	"log"
 	"strconv"
@@ -10,9 +10,11 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var db, db2, db3 *sql.DB
 var secret = []byte("secret")
 var tokenLifetime int64
+var feedSize int64
+var feedUpdateBatchSize int64
+var ctx = context.Background()
 
 func main() {
 	dsnHost := getEnvVar("POSTGRESQL_HOST", "localhost")
@@ -28,12 +30,34 @@ func main() {
 	db = connectToDB(dsnHost, dsnPort, dsnDb, dsnUsername, dsnPassword, dsnSslMode)
 	db2 = connectToDB(dsnSlave1Host, dsnSlave1Port, dsnDb, dsnUsername, dsnPassword, dsnSslMode)
 	db3 = connectToDB(dsnSlave2Host, dsnSlave2Port, dsnDb, dsnUsername, dsnPassword, dsnSslMode)
+	dbMigrate()
+
+	redisHost := getEnvVar("REDIS_HOST", "localhost")
+	redisPort := getEnvVar("REDIS_PORT", "6379")
+	redisPassword := getEnvVar("REDIS_PASSWORD", "")
+	feedCache = connectToRedis(redisHost, redisPort, redisPassword)
+
 	var err error
 	tokenLifetime, err = strconv.ParseInt(getEnvVar("TOKEN_LIFETIME", "60"), 10, 64)
 
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	feedSize, err = strconv.ParseInt(getEnvVar("FEED_SIZE", "10"), 10, 64)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	feedUpdateBatchSize, err = strconv.ParseInt(getEnvVar("FEED_UPDATE_BATCH_SIZE", "10"), 10, 64)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	go cacheSubPrepareFeedUpdate()
+	go cacheSubFeedUpdate()
 
 	if getEnvVar("ENVIRONMENT", "Development") == "Production" {
 		gin.SetMode(gin.ReleaseMode)
@@ -46,6 +70,14 @@ func main() {
 	router.GET("/user/:id", getUserByID)
 	router.POST("/login", login)
 	router.GET("/user/search", searchUsersByFistAndLastName)
+	router.PUT("/friend/:id", addFriendByID)
+	router.DELETE("/friend/:id", deleteFriendByID)
+	router.POST("/post", createPost)
+	router.GET("/post/:id", getPostByID)
+	router.PUT("/post/:id", updatePost)
+	router.DELETE("/post/:id", deletePost)
+	router.GET("/feed", getFeedForUser)
+	router.POST("/feeds/reload", reloadFeeds)
 	serverHost := getEnvVar("SERVER_HOST", "0.0.0.0")
 	serverPort := getEnvVar("SERVER_PORT", "8080")
 	server := fmt.Sprintf("%v:%v", serverHost, serverPort)

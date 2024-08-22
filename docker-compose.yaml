@@ -69,6 +69,21 @@ services:
         source: postgresql3_data
         target: /var/lib/postgresql/data
 
+  redis:
+    image: redis:7.4.0-alpine
+    command: redis-server /usr/local/etc/redis/redis.conf
+    restart: always
+    cpus: 0.5
+    ports:
+      - "6379:6379"
+    volumes:
+      - type: bind
+        source: infrastructure/redis/redis.conf
+        target: /usr/local/etc/redis/redis.conf
+      - type: volume
+        source: redis_data
+        target: /data
+
   influxdb:
     image: influxdb:1.8.10
     restart: always
@@ -139,10 +154,11 @@ services:
       dockerfile: Dockerfile
     environment:
       POSTGRESQL_HOST: postgresql
-      POSTGRESQL2_HOST: postgresql2
+      POSTGRESQL2_HOST: postgresql
       POSTGRESQL2_PORT: 5432
-      POSTGRESQL3_HOST: postgresql3
+      POSTGRESQL3_HOST: postgresql
       POSTGRESQL3_PORT: 5432
+      REDIS_HOST: redis
       ENVIRONMENT: Production
     cpus: 1
     restart: always
@@ -153,4 +169,5 @@ volumes:
   postgresql_data:
   postgresql2_data:
   postgresql3_data:
+  redis_data:
   influxdb_data:

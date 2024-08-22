@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"strconv"
 	"strings"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 )
 
@@ -18,7 +21,9 @@ func getEnvVar(key, fallback string) string {
 	return value
 }
 
-func verifyToken(authorizationHeader []string) error {
+func verifyToken(c *gin.Context) error {
+	authorizationHeader := c.Request.Header["Authorization"]
+
 	if authorizationHeader == nil {
 		return fmt.Errorf("verifyToken: Authorization header not present")
 	}
@@ -38,5 +43,26 @@ func verifyToken(authorizationHeader []string) error {
 		return err
 	}
 
+	c.Set("user_id", claims["id"])
 	return nil
+}
+
+func getUserIDFromContext(c *gin.Context) (int64, error) {
+	userIDAny, exists := c.Get("user_id")
+
+	if !exists {
+		msg := "getUserIDFromContext: user_id not present in context"
+		log.Println(msg)
+		return 0, fmt.Errorf(msg)
+	}
+
+	userID, err := strconv.ParseInt(userIDAny.(string), 10, 64)
+
+	if err != nil {
+		msg := "getUserIDFromContext: user_id is not an int64"
+		log.Println(msg)
+		return 0, fmt.Errorf(msg)
+	}
+
+	return userID, nil
 }

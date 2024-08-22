@@ -21,3 +21,20 @@ type PrintableUser struct {
 	Interests string `json:"interests"`
 	City      string `json:"city"`
 }
+
+type Post struct {
+	ID      int64  `json:"id"`
+	Text    string `json:"text"`
+	UserID  int64  `json:"user_id"`
+	Updated string `json:"updated"`
+}
+
+type FeedUpdateInitiator struct {
+	PostID   int64 `json:"post_id"`
+	FriendID int64 `json:"friend_id"`
+}
+
+type FeedUpdateReceivers struct {
+	PostID  int64   `json:"post_id"`
+	UserIDs []int64 `json:"user_ids"`
+}
