@@ -22,7 +22,7 @@ func connectToRedis(host string, port string, password string) *redis.Client {
 func cacheGetFeedForUser(userId int64, offset int64, limit int64) ([]Post, error) {
 	postStrings := feedCache.LRange(ctx, strconv.FormatInt(userId, 10), offset, offset+limit-1).Val()
 	var post Post
-	var posts []Post
+	posts := make([]Post, 0)
 
 	for _, postString := range postStrings {
 		if err := json.Unmarshal([]byte(postString), &post); err != nil {

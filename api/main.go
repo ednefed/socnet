@@ -32,6 +32,14 @@ func main() {
 	db3 = connectToDB(dsnSlave2Host, dsnSlave2Port, dsnDb, dsnUsername, dsnPassword, dsnSslMode)
 	dbMigrate()
 
+	citusHost := getEnvVar("CITUS_HOST", "localhost")
+	citusPort := getEnvVar("CITUS_PORT", "5432")
+	citusDb := getEnvVar("CITUS_DB", "postgres")
+	citusUsername := getEnvVar("CITUS_USERNAME", "postgres")
+	citusPassword := getEnvVar("CITUS_PASSWORD", "postgres")
+	citusSslMode := getEnvVar("CITUS_SSL_MODE", "disable")
+	citus = connectToDB(citusHost, citusPort, citusDb, citusUsername, citusPassword, citusSslMode)
+
 	redisHost := getEnvVar("REDIS_HOST", "localhost")
 	redisPort := getEnvVar("REDIS_PORT", "6379")
 	redisPassword := getEnvVar("REDIS_PASSWORD", "")
@@ -78,6 +86,8 @@ func main() {
 	router.DELETE("/post/:id", deletePost)
 	router.GET("/feed", getFeedForUser)
 	router.POST("/feeds/reload", reloadFeeds)
+	router.POST("/dialog/:id", createDialogMessage)
+	router.GET("/dialog/:id", getDialogMessages)
 	serverHost := getEnvVar("SERVER_HOST", "0.0.0.0")
 	serverPort := getEnvVar("SERVER_PORT", "8080")
 	server := fmt.Sprintf("%v:%v", serverHost, serverPort)

@@ -364,7 +364,7 @@ func getFeedForUser(c *gin.Context) {
 		}
 	}
 
-	limitStr := c.Query("offset")
+	limitStr := c.Query("limit")
 
 	if limitStr == "" {
 		limit = 5
@@ -423,4 +423,72 @@ func reloadFeeds(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Feeds reloaded"})
+}
+
+func createDialogMessage(c *gin.Context) {
+	if err := verifyToken(c); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
+		return
+	}
+
+	userID, err := getUserIDFromContext(c)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
+		return
+	}
+
+	friendID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid parameter"})
+		return
+	}
+
+	var message Message
+
+	if err := c.BindJSON(&message); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid data"})
+		return
+	}
+
+	message.FromUserID = userID
+	message.ToUserID = friendID
+
+	if _, err := citusCreateMessage(message); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Message sent"})
+}
+
+func getDialogMessages(c *gin.Context) {
+	if err := verifyToken(c); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
+		return
+	}
+
+	userID, err := getUserIDFromContext(c)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
+		return
+	}
+
+	friendID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid parameter"})
+		return
+	}
+
+	messages, err := citusGetDialogMessages(userID, friendID)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, messages)
 }

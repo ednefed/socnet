@@ -14,7 +14,7 @@ services:
       retries: 5
       start_period: 30s
     restart: always
-    cpus: 1
+    cpus: 0.25
     ports:
       - "5432:5432"
     volumes:
@@ -39,7 +39,7 @@ services:
       retries: 5
       start_period: 30s
     restart: always
-    cpus: 1
+    cpus: 0.25
     ports:
       - "5433:5432"
     volumes:
@@ -61,7 +61,7 @@ services:
       retries: 5
       start_period: 30s
     restart: always
-    cpus: 1
+    cpus: 0.25
     ports:
       - "5434:5432"
     volumes:
@@ -69,11 +69,70 @@ services:
         source: postgresql3_data
         target: /var/lib/postgresql/data
 
+  citus:
+    image: citusdata/citus:12.1.3-alpine
+    environment:
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_HOST_AUTH_METHOD: "trust"
+      PGAPPNAME: citus
+    healthcheck:
+      test: pg_isready -U postgres
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: always
+    cpus: 0.25
+    ports:
+      - "5435:5432"
+    volumes:
+      - type: volume
+        source: citus_data
+        target: /var/lib/postgresql/data
+
+  citus_worker_1:
+    image: citusdata/citus:12.1.3-alpine
+    environment:
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_HOST_AUTH_METHOD: "trust"
+      PGAPPNAME: citus_worker_1
+    healthcheck:
+      test: pg_isready -U postgres
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: always
+    cpus: 0.25
+    volumes:
+      - type: volume
+        source: citus_worker_1_data
+        target: /var/lib/postgresql/data
+
+  citus_worker_2:
+    image: citusdata/citus:12.1.3-alpine
+    environment:
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_HOST_AUTH_METHOD: "trust"
+      PGAPPNAME: citus_worker_2
+    healthcheck:
+      test: pg_isready -U postgres
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: always
+    cpus: 0.25
+    volumes:
+      - type: volume
+        source: citus_worker_2_data
+        target: /var/lib/postgresql/data
+
   redis:
     image: redis:7.4.0-alpine
     command: redis-server /usr/local/etc/redis/redis.conf
     restart: always
-    cpus: 0.5
+    cpus: 0.25
     ports:
       - "6379:6379"
     volumes:
@@ -87,7 +146,7 @@ services:
   influxdb:
     image: influxdb:1.8.10
     restart: always
-    cpus: 0.5
+    cpus: 0.25
     ports:
      - "8086:8086"
     volumes:
@@ -158,9 +217,10 @@ services:
       POSTGRESQL2_PORT: 5432
       POSTGRESQL3_HOST: postgresql
       POSTGRESQL3_PORT: 5432
+      CITUS_HOST: citus
       REDIS_HOST: redis
       ENVIRONMENT: Production
-    cpus: 1
+    cpus: 0.25
     restart: always
     ports:
       - "8080:8080"
@@ -171,3 +231,6 @@ volumes:
   postgresql3_data:
   redis_data:
   influxdb_data:
+  citus_data:
+  citus_worker_1_data:
+  citus_worker_2_data:
