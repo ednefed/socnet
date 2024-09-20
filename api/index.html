@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Posts Feed</title>
+</head>
+<body>
+	<h1>Posts Feed</h1>
+	<form>
+		<input id="user" type="text" value="1">
+		<button id="open">Open socket as User ID</button>
+	</form>
+	<hr>
+	<div id="output"></div>
+
+	<script>
+		window.addEventListener("load", function(evt) {
+			var user = document.getElementById("user");
+			var socket;
+
+			document.getElementById("open").onclick = function(evt) {
+				if (socket) {
+					return false
+				}
+				
+				socket = new WebSocket("ws://" + window.location.host + "/post/feed/" + user.value);
+			
+				socket.onopen = function(event) {
+					console.log("WebSocket connected!");
+				}
+	
+				socket.onmessage = function(event) {
+					console.log("Received message:", event.data);
+					document.getElementById("output").innerHTML += event.data + "<br>";
+				}
+
+				return false
+			}
+		});
+	</script>
+</body>
+</html>

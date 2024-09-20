@@ -45,6 +45,12 @@ func main() {
 	redisPassword := getEnvVar("REDIS_PASSWORD", "")
 	feedCache = connectToRedis(redisHost, redisPort, redisPassword)
 
+	rabbitmqHost := getEnvVar("RABBITMQ_HOST", "localhost")
+	rabbitmqPort := getEnvVar("RABBITMQ_PORT", "5672")
+	rabbitmqUsername := getEnvVar("RABBITMQ_USERNAME", "admin")
+	rabbitmqPassword := getEnvVar("RABBITMQ_PASSWORD", "admin")
+	rabbitmq = connectToRabbitMQ(rabbitmqHost, rabbitmqPort, rabbitmqUsername, rabbitmqPassword)
+
 	var err error
 	tokenLifetime, err = strconv.ParseInt(getEnvVar("TOKEN_LIFETIME", "60"), 10, 64)
 
@@ -88,6 +94,8 @@ func main() {
 	router.POST("/feeds/reload", reloadFeeds)
 	router.POST("/dialog/:id", createDialogMessage)
 	router.GET("/dialog/:id", getDialogMessages)
+	router.GET("/post/feed/:id", getNewPostsWS)
+	router.GET("/", getHome)
 	serverHost := getEnvVar("SERVER_HOST", "0.0.0.0")
 	serverPort := getEnvVar("SERVER_PORT", "8080")
 	server := fmt.Sprintf("%v:%v", serverHost, serverPort)

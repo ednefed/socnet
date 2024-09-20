@@ -188,25 +188,25 @@ func dbDeletePost(post Post) (Post, error) {
 	return post, nil
 }
 
-func dbGetFriendsCountByUserID(userID int64) (int64, error) {
+func dbGetSubscribersCountByUserID(userID int64) (int64, error) {
 	query := "SELECT count(1) FROM public.friends WHERE friend_id = $1"
 	var count int64
 
 	if err := db.QueryRow(query, userID).Scan(&count); err != nil {
-		log.Printf("dbGetFriendsCountByUserID.QueryRow: %v", err)
+		log.Printf("dbGetSubscribersCountByUserID.QueryRow: %v", err)
 		return 0, err
 	}
 
 	return count, nil
 }
 
-func dbGetFriendsByUserID(userID int64, offset, limit int64) ([]int64, error) {
+func dbGetSubscribersByUserID(userID int64, offset, limit int64) ([]int64, error) {
 	query := "SELECT user_id from public.friends WHERE friend_id = $1 OFFSET $2 LIMIT $3"
 	var userIDs []int64
 	rows, err := db.Query(query, userID, offset, limit)
 
 	if err != nil {
-		log.Printf("dbGetFriendsByUserID.Query: %v", err)
+		log.Printf("dbGetSubscribersByUserID.Query: %v", err)
 		return nil, err
 	}
 
@@ -216,7 +216,7 @@ func dbGetFriendsByUserID(userID int64, offset, limit int64) ([]int64, error) {
 		var userID int64
 
 		if err := rows.Scan(&userID); err != nil {
-			log.Printf("dbGetFriendsByUserID.Scan: %v", err)
+			log.Printf("dbGetSubscribersByUserID.Scan: %v", err)
 			return nil, err
 		}
 
@@ -224,7 +224,7 @@ func dbGetFriendsByUserID(userID int64, offset, limit int64) ([]int64, error) {
 	}
 
 	if err := rows.Err(); err != nil {
-		log.Printf("dbGetFriendsByUserID.rows: %v", err)
+		log.Printf("dbGetSubscribersByUserID.rows: %v", err)
 		return nil, err
 	}
 
@@ -303,4 +303,39 @@ func dbGetPostsForFeedByUserID(userID int64) ([]Post, error) {
 	}
 
 	return posts, nil
+}
+
+func dbGetFriendsByUserID(userID int64) ([]int64, error) {
+	query := "SELECT friend_id FROM public.friends WHERE user_id = $1"
+	var friendIDs []int64
+	rows, err := db.Query(query, userID)
+
+	if err != nil {
+		log.Printf("dbGetFriendsByUserID.Query: %v", err)
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var friendID int64
+
+		if err := rows.Scan(&friendID); err != nil {
+			log.Printf("dbGetFriendsByUserID.Scan: %v", err)
+			return nil, err
+		}
+
+		friendIDs = append(friendIDs, friendID)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Printf("dbGetFriendsByUserID.rows: %v", err)
+		return nil, err
+	}
+
+	if len(friendIDs) == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	return friendIDs, nil
 }

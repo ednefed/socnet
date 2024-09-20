@@ -12,6 +12,7 @@ FROM alpine:3.20
 WORKDIR /app
 
 COPY --from=build /app/api .
+COPY *.html .
 
 EXPOSE 8080
 ENTRYPOINT [ "/app/api" ]

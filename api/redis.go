@@ -16,6 +16,8 @@ func connectToRedis(host string, port string, password string) *redis.Client {
 		Password: password,
 		DB:       0,
 	})
+
+	log.Printf("Connected to redis %v:%v", host, port)
 	return client
 }
 
@@ -113,7 +115,7 @@ func cacheSubPrepareFeedUpdate() {
 		}
 
 		log.Printf("cacheSubPrepareFeedUpdate: rcvd initiator: %v", initiator)
-		friendsCount, err := dbGetFriendsCountByUserID(initiator.FriendID)
+		friendsCount, err := dbGetSubscribersCountByUserID(initiator.FriendID)
 
 		if err != nil {
 			log.Printf("createPost.dbGetFriendsCount: %v", err)
@@ -123,7 +125,7 @@ func cacheSubPrepareFeedUpdate() {
 		var friends []int64
 
 		for i = 0; i < friendsCount; i += feedUpdateBatchSize {
-			friends, err = dbGetFriendsByUserID(initiator.FriendID, i, feedUpdateBatchSize)
+			friends, err = dbGetSubscribersByUserID(initiator.FriendID, i, feedUpdateBatchSize)
 
 			if err != nil {
 				log.Printf("createPost.dbGetFriends: %v", err)

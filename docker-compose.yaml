@@ -143,6 +143,46 @@ services:
         source: redis_data
         target: /data
 
+  rabbitmq1:
+    image: rabbitmq:4.0.0-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+      RABBITMQ_ERLANG_COOKIE: 12345678
+    hostname: rabbitmq1
+    restart: always
+    cpus: 0.25
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - type: volume
+        source: rabbitmq1_data
+        target: /var/lib/rabbitmq
+      - type: bind
+        source: ./infrastructure/rabbitmq/rabbitmq.conf
+        target: /etc/rabbitmq/rabbitmq.conf
+
+  rabbitmq2:
+    image: rabbitmq:4.0.0-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+      RABBITMQ_ERLANG_COOKIE: 12345678
+    hostname: rabbitmq2
+    restart: always
+    cpus: 0.25
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    volumes:
+      - type: volume
+        source: rabbitmq2_data
+        target: /var/lib/rabbitmq
+      - type: bind
+        source: ./infrastructure/rabbitmq/rabbitmq.conf
+        target: /etc/rabbitmq/rabbitmq.conf
+
   influxdb:
     image: influxdb:1.8.10
     restart: always
@@ -219,6 +259,7 @@ services:
       POSTGRESQL3_PORT: 5432
       CITUS_HOST: citus
       REDIS_HOST: redis
+      RABBITMQ_HOST: rabbitmq1
       ENVIRONMENT: Production
     cpus: 0.25
     restart: always
@@ -234,3 +275,5 @@ volumes:
   citus_data:
   citus_worker_1_data:
   citus_worker_2_data:
+  rabbitmq1_data:
+  rabbitmq2_data:

@@ -4,14 +4,18 @@ import (
 	"database/sql"
 	"encoding/json"
 	"log"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
+	"github.com/gorilla/websocket"
 	"golang.org/x/crypto/bcrypt"
 )
+
+var upgrader = websocket.Upgrader{}
 
 func signup(c *gin.Context) {
 	var user User
@@ -224,10 +228,12 @@ func createPost(c *gin.Context) {
 		FriendID: post.UserID,
 	}
 
-	err = cachePubPrepareFeedUpdate(initiator)
-
-	if err != nil {
+	if err = cachePubPrepareFeedUpdate(initiator); err != nil {
 		log.Printf("createPost.cachePubPrepareFeedUpdate: %v", err)
+	}
+
+	if err = rmqPubPost(post); err != nil {
+		log.Printf("createPost.rmqPubPost: %v", err)
 	}
 }
 
@@ -491,4 +497,103 @@ func getDialogMessages(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, messages)
+}
+
+func getNewPostsWS(c *gin.Context) {
+	// TODO: authentication on home page
+	userID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid parameter"})
+		return
+	}
+
+	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
+		return
+	}
+
+	defer ws.Close()
+
+	friends, err := dbGetFriendsByUserID(userID)
+
+	if err != nil {
+		if err != sql.ErrNoRows {
+			log.Printf("getNewPostsWS.dbGetFriendsByUserID: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
+			return
+		}
+	}
+
+	if len(friends) == 0 {
+		return
+	}
+
+	channel, err := rabbitmq.Channel()
+
+	if err != nil {
+		log.Printf("getNewPostsWS.Channel: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
+		return
+	}
+
+	defer channel.Close()
+
+	queue_name := strconv.FormatInt(userID, 10) + "-" + strconv.Itoa(rand.Int())[0:8]
+	queue, err := channel.QueueDeclare(
+		queue_name,
+		false,
+		true,
+		false,
+		false,
+		nil,
+	)
+
+	if err != nil {
+		log.Printf("getNewPostsWS.QueueDeclare: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
+		return
+	}
+
+	for _, friend := range friends {
+		err = channel.QueueBind(
+			queue.Name,
+			strconv.FormatInt(friend, 10),
+			"amq.direct",
+			false,
+			nil,
+		)
+
+		if err != nil {
+			log.Printf("rmqSubPosts.QueueBind: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
+			return
+		}
+	}
+
+	msgs, err := channel.Consume(
+		queue.Name,
+		"",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+
+	if err != nil {
+		log.Printf("getNewPostsWS.Consume: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
+		return
+	}
+
+	for msg := range msgs {
+		ws.WriteMessage(websocket.TextMessage, msg.Body)
+	}
+}
+
+func getHome(c *gin.Context) {
+	c.File("index.html")
 }
