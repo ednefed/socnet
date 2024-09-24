@@ -51,6 +51,11 @@ func main() {
 	rabbitmqPassword := getEnvVar("RABBITMQ_PASSWORD", "admin")
 	rabbitmq = connectToRabbitMQ(rabbitmqHost, rabbitmqPort, rabbitmqUsername, rabbitmqPassword)
 
+	tarantoolHost := getEnvVar("TARANTOOL_HOST", "localhost")
+	tarantoolPort := getEnvVar("TARANTOOL_PORT", "3301")
+	tarantoolUsername := getEnvVar("TARANTOOL_USERNAME", "guest")
+	tt = connectToTarantool(tarantoolHost, tarantoolPort, tarantoolUsername)
+
 	var err error
 	tokenLifetime, err = strconv.ParseInt(getEnvVar("TOKEN_LIFETIME", "60"), 10, 64)
 

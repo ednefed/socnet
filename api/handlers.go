@@ -460,8 +460,10 @@ func createDialogMessage(c *gin.Context) {
 
 	message.FromUserID = userID
 	message.ToUserID = friendID
+	message.CreatedAt = time.Now().Format(time.RFC3339)
 
-	if _, err := citusCreateMessage(message); err != nil {
+	// if _, err := citusCreateMessage(message); err != nil {
+	if _, err := tarantoolCreateMessage(message); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
 		return
 	}
@@ -489,7 +491,8 @@ func getDialogMessages(c *gin.Context) {
 		return
 	}
 
-	messages, err := citusGetDialogMessages(userID, friendID)
+	// messages, err := citusGetDialogMessages(userID, friendID)
+	messages, err := tarantoolGetDialogMessages(userID, friendID)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})

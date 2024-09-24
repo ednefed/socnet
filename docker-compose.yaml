@@ -183,6 +183,27 @@ services:
         source: ./infrastructure/rabbitmq/rabbitmq.conf
         target: /etc/rabbitmq/rabbitmq.conf
 
+  tarantool:
+    image: tarantool/tarantool:3.2.0
+    command: tarantool /opt/tarantool/app.lua
+    healthcheck:
+      test: echo "box.slab.info()" | tt connect tcp://localhost:3301 -f-
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: always
+    cpus: 0.25
+    ports:
+      - "3301:3301"
+    volumes:
+      - type: volume
+        source: tarantool_data
+        target: /var/lib/tarantool
+      - type: bind
+        source: ./infrastructure/tarantool
+        target: /opt/tarantool
+
   influxdb:
     image: influxdb:1.8.10
     restart: always
@@ -260,6 +281,7 @@ services:
       CITUS_HOST: citus
       REDIS_HOST: redis
       RABBITMQ_HOST: rabbitmq1
+      TARANTOOL_HOST: tarantool
       ENVIRONMENT: Production
     cpus: 0.25
     restart: always
@@ -277,3 +299,4 @@ volumes:
   citus_worker_2_data:
   rabbitmq1_data:
   rabbitmq2_data:
+  tarantool_data:
