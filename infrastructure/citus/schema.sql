@@ -16,6 +16,5 @@ CREATE TABLE public.dialogs (
 );
 SELECT create_distributed_table('dialogs', 'to_user');
 CREATE INDEX dialogs_from_user ON public.dialogs (from_user, to_user, created_at DESC);
-CREATE INDEX dialogs_to_user on public.dialogs (to_user, from_user, created_at DESC);
 ALTER TABLE dialogs REPLICA IDENTITY
   USING INDEX dialogs_uniq;

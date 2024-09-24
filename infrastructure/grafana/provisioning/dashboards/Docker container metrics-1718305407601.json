@@ -5,6 +5,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
+  "iteration": 1727121561766,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -117,7 +118,13 @@
               }
             ]
           ],
-          "tags": []
+          "tags": [
+            {
+              "key": "container_name",
+              "operator": "=~",
+              "value": "/^$container_name$/"
+            }
+          ]
         }
       ],
       "title": "CPU usage",
@@ -232,7 +239,13 @@
               }
             ]
           ],
-          "tags": []
+          "tags": [
+            {
+              "key": "container_name",
+              "operator": "=~",
+              "value": "/^$container_name$/"
+            }
+          ]
         }
       ],
       "title": "Memory usage",
@@ -399,7 +412,13 @@
               }
             ]
           ],
-          "tags": []
+          "tags": [
+            {
+              "key": "container_name",
+              "operator": "=~",
+              "value": "/^$container_name$/"
+            }
+          ]
         }
       ],
       "title": "Disc read/write",
@@ -567,7 +586,13 @@
               }
             ]
           ],
-          "tags": []
+          "tags": [
+            {
+              "key": "container_name",
+              "operator": "=~",
+              "value": "/^$container_name$/"
+            }
+          ]
         }
       ],
       "title": "Network in/out",
@@ -579,7 +604,36 @@
   "style": "dark",
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "influxdb",
+          "uid": "PE46F8281683B3570"
+        },
+        "definition": "SHOW TAG VALUES WITH KEY = \"container_name\"",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Container name",
+        "multi": true,
+        "name": "container_name",
+        "options": [],
+        "query": "SHOW TAG VALUES WITH KEY = \"container_name\"",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
   },
   "time": {
     "from": "now-30m",
