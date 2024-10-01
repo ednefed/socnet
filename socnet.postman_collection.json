@@ -582,6 +582,59 @@
 			"response": []
 		},
 		{
+			"name": "Send message with new service",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.collectionVariables.set(\"post_id\", pm.response.json().id);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"message\": \"fgldfjgldfjg;kfdjglfgdfgfgd\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8081/api/v2/dialog/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"v2",
+						"dialog",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "Get messages",
 			"event": [
 				{
@@ -628,6 +681,62 @@
 					],
 					"port": "8080",
 					"path": [
+						"dialog",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get messages with new service",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.collectionVariables.set(\"post_id\", pm.response.json().id);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"message\": \"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lectus mauris ultrices eros in cursus turpis massa. In fermentum et sollicitudin ac orci. Faucibus ornare suspendisse sed nisi lacus sed. Vivamus at augue eget arcu dictum varius. Lobortis scelerisque fermentum dui faucibus in ornare quam. Feugiat in fermentum posuere urna nec tincidunt. Ullamcorper velit sed ullamcorper morbi tincidunt ornare. In hac habitasse platea dictumst quisque sagittis. Felis bibendum ut tristique et. Diam maecenas ultricies mi eget mauris pharetra et ultrices neque.\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8081/api/v2/dialog/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"v2",
 						"dialog",
 						"1"
 					]

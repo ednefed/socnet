@@ -15,6 +15,7 @@ var tokenLifetime int64
 var feedSize int64
 var feedUpdateBatchSize int64
 var ctx = context.Background()
+var dialogAPIHost string
 
 func main() {
 	dsnHost := getEnvVar("POSTGRESQL_HOST", "localhost")
@@ -32,14 +33,6 @@ func main() {
 	db3 = connectToDB(dsnSlave2Host, dsnSlave2Port, dsnDb, dsnUsername, dsnPassword, dsnSslMode)
 	dbMigrate()
 
-	citusHost := getEnvVar("CITUS_HOST", "localhost")
-	citusPort := getEnvVar("CITUS_PORT", "5432")
-	citusDb := getEnvVar("CITUS_DB", "postgres")
-	citusUsername := getEnvVar("CITUS_USERNAME", "postgres")
-	citusPassword := getEnvVar("CITUS_PASSWORD", "postgres")
-	citusSslMode := getEnvVar("CITUS_SSL_MODE", "disable")
-	citus = connectToDB(citusHost, citusPort, citusDb, citusUsername, citusPassword, citusSslMode)
-
 	redisHost := getEnvVar("REDIS_HOST", "localhost")
 	redisPort := getEnvVar("REDIS_PORT", "6379")
 	redisPassword := getEnvVar("REDIS_PASSWORD", "")
@@ -51,10 +44,7 @@ func main() {
 	rabbitmqPassword := getEnvVar("RABBITMQ_PASSWORD", "admin")
 	rabbitmq = connectToRabbitMQ(rabbitmqHost, rabbitmqPort, rabbitmqUsername, rabbitmqPassword)
 
-	tarantoolHost := getEnvVar("TARANTOOL_HOST", "localhost")
-	tarantoolPort := getEnvVar("TARANTOOL_PORT", "3301")
-	tarantoolUsername := getEnvVar("TARANTOOL_USERNAME", "guest")
-	tt = connectToTarantool(tarantoolHost, tarantoolPort, tarantoolUsername)
+	dialogAPIHost = getEnvVar("DIALOG_API_Host", "dialog_api:8080")
 
 	var err error
 	tokenLifetime, err = strconv.ParseInt(getEnvVar("TOKEN_LIFETIME", "60"), 10, 64)
@@ -97,8 +87,8 @@ func main() {
 	router.DELETE("/post/:id", deletePost)
 	router.GET("/feed", getFeedForUser)
 	router.POST("/feeds/reload", reloadFeeds)
-	router.POST("/dialog/:id", createDialogMessage)
-	router.GET("/dialog/:id", getDialogMessages)
+	router.POST("/dialog/:id", dialogAPIProxyHandler)
+	router.GET("/dialog/:id", dialogAPIProxyHandler)
 	router.GET("/post/feed/:id", getNewPostsWS)
 	router.GET("/", getHome)
 	serverHost := getEnvVar("SERVER_HOST", "0.0.0.0")
