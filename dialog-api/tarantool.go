@@ -50,16 +50,28 @@ func tarantoolSelectFromDialogs(query string) ([]Message, error) {
 	raw, err := tt.Do(tarantool.NewEvalRequest(query)).Get()
 
 	if err != nil {
-		log.Printf("tarantoolGetMessages: %v", err)
+		log.Printf("tarantoolSelectFromDialogs: %v", err)
 		return nil, err
 	}
 
 	data := raw[0].([]interface{})
 
 	for _, item := range data {
+		var fromUserID, toUserID int64
+
+		if fromUserID, err = convertTarantoolIntToInt64(item.([]interface{})[1]); err != nil {
+			log.Printf("tarantoolSelectFromDialogs.convertTarantoolIntToInt64: %v", err)
+			return nil, err
+		}
+
+		if toUserID, err = convertTarantoolIntToInt64(item.([]interface{})[2]); err != nil {
+			log.Printf("tarantoolSelectFromDialogs.convertTarantoolIntToInt64: %v", err)
+			return nil, err
+		}
+
 		message := Message{
-			FromUserID: int64(item.([]interface{})[1].(int8)),
-			ToUserID:   int64(item.([]interface{})[2].(int8)),
+			FromUserID: fromUserID,
+			ToUserID:   toUserID,
 			Message:    item.([]interface{})[3].(string),
 			CreatedAt:  item.([]interface{})[4].(string),
 		}

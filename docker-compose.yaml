@@ -288,6 +288,19 @@ services:
     ports:
       - "8080:8080"
 
+  dialog_api:
+    image: socnet/dialog-api
+    build:
+      context: dialog-api
+      dockerfile: Dockerfile
+    environment:
+      TARANTOOL_HOST: tarantool
+      ENVIRONMENT: Production
+    cpus: 0.25
+    restart: always
+    ports:
+      - "8081:8080"
+
 volumes:
   postgresql_data:
   postgresql2_data:

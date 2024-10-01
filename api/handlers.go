@@ -3,14 +3,18 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -431,75 +435,32 @@ func reloadFeeds(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Feeds reloaded"})
 }
 
-func createDialogMessage(c *gin.Context) {
-	if err := verifyToken(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
-		return
-	}
-
-	userID, err := getUserIDFromContext(c)
+func dialogAPIProxyHandler(c *gin.Context) {
+	remote, err := url.Parse(fmt.Sprintf("http://%s/api/v2/%s", dialogAPIHost, c.Request.URL.Path[1:]))
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
 		return
 	}
 
-	friendID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	xRequestID := c.GetHeader("X-Request-ID")
 
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid parameter"})
-		return
+	if len(xRequestID) == 0 {
+		xRequestID = uuid.New().String()
 	}
 
-	var message Message
-
-	if err := c.BindJSON(&message); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid data"})
-		return
+	log.Printf("request-id: %s, proxy: %s %s -> %s", xRequestID, c.Request.Method, c.Request.URL.Path, dialogAPIHost)
+	proxy := httputil.NewSingleHostReverseProxy(remote)
+	proxy.Director = func(req *http.Request) {
+		req.Header = c.Request.Header
+		req.Header["X-Request-ID"] = []string{xRequestID}
+		req.Host = remote.Host
+		req.URL.Scheme = remote.Scheme
+		req.URL.Host = remote.Host
+		req.URL.Path = remote.Path
 	}
 
-	message.FromUserID = userID
-	message.ToUserID = friendID
-	message.CreatedAt = time.Now().Format(time.RFC3339)
-
-	// if _, err := citusCreateMessage(message); err != nil {
-	if _, err := tarantoolCreateMessage(message); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Message sent"})
-}
-
-func getDialogMessages(c *gin.Context) {
-	if err := verifyToken(c); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid token"})
-		return
-	}
-
-	userID, err := getUserIDFromContext(c)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
-		return
-	}
-
-	friendID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid parameter"})
-		return
-	}
-
-	// messages, err := citusGetDialogMessages(userID, friendID)
-	messages, err := tarantoolGetDialogMessages(userID, friendID)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
-		return
-	}
-
-	c.JSON(http.StatusOK, messages)
+	proxy.ServeHTTP(c.Writer, c.Request)
 }
 
 func getNewPostsWS(c *gin.Context) {
