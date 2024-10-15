@@ -41,7 +41,7 @@ services:
     restart: always
     cpus: 0.25
     ports:
-      - "5433:5432"
+      - "55433:5432"
     volumes:
       - type: volume
         source: postgresql2_data
@@ -63,70 +63,23 @@ services:
     restart: always
     cpus: 0.25
     ports:
-      - "5434:5432"
+      - "55434:5432"
     volumes:
       - type: volume
         source: postgresql3_data
         target: /var/lib/postgresql/data
 
-  citus:
-    image: citusdata/citus:12.1.3-alpine
-    environment:
-      POSTGRES_PASSWORD: "postgres"
-      POSTGRES_HOST_AUTH_METHOD: "trust"
-      PGAPPNAME: citus
-    healthcheck:
-      test: pg_isready -U postgres
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+  haproxy:
+    image: haproxy:3.0.5-alpine
+    command: haproxy -f /etc/haproxy/haproxy.cfg
     restart: always
     cpus: 0.25
     ports:
-      - "5435:5432"
+      - "5433:5433"
     volumes:
-      - type: volume
-        source: citus_data
-        target: /var/lib/postgresql/data
-
-  citus_worker_1:
-    image: citusdata/citus:12.1.3-alpine
-    environment:
-      POSTGRES_PASSWORD: "postgres"
-      POSTGRES_HOST_AUTH_METHOD: "trust"
-      PGAPPNAME: citus_worker_1
-    healthcheck:
-      test: pg_isready -U postgres
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    restart: always
-    cpus: 0.25
-    volumes:
-      - type: volume
-        source: citus_worker_1_data
-        target: /var/lib/postgresql/data
-
-  citus_worker_2:
-    image: citusdata/citus:12.1.3-alpine
-    environment:
-      POSTGRES_PASSWORD: "postgres"
-      POSTGRES_HOST_AUTH_METHOD: "trust"
-      PGAPPNAME: citus_worker_2
-    healthcheck:
-      test: pg_isready -U postgres
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    restart: always
-    cpus: 0.25
-    volumes:
-      - type: volume
-        source: citus_worker_2_data
-        target: /var/lib/postgresql/data
+      - type: bind
+        source: infrastructure/haproxy/haproxy.cfg
+        target: /etc/haproxy/haproxy.cfg
 
   redis:
     image: redis:7.4.0-alpine
@@ -274,11 +227,10 @@ services:
       dockerfile: Dockerfile
     environment:
       POSTGRESQL_HOST: postgresql
-      POSTGRESQL2_HOST: postgresql
-      POSTGRESQL2_PORT: 5432
-      POSTGRESQL3_HOST: postgresql
-      POSTGRESQL3_PORT: 5432
-      CITUS_HOST: citus
+      POSTGRESQL2_HOST: haproxy
+      POSTGRESQL2_PORT: 5433
+      POSTGRESQL3_HOST: haproxy
+      POSTGRESQL3_PORT: 5433
       REDIS_HOST: redis
       RABBITMQ_HOST: rabbitmq1
       TARANTOOL_HOST: tarantool
@@ -286,7 +238,27 @@ services:
     cpus: 0.25
     restart: always
     ports:
-      - "8080:8080"
+      - "58080:8080"
+
+  api2:
+    image: socnet/api
+    build:
+      context: api
+      dockerfile: Dockerfile
+    environment:
+      POSTGRESQL_HOST: postgresql
+      POSTGRESQL2_HOST: haproxy
+      POSTGRESQL2_PORT: 5433
+      POSTGRESQL3_HOST: haproxy
+      POSTGRESQL3_PORT: 5433
+      REDIS_HOST: redis
+      RABBITMQ_HOST: rabbitmq1
+      TARANTOOL_HOST: tarantool
+      ENVIRONMENT: Production
+    cpus: 0.25
+    restart: always
+    ports:
+      - "58081:8080"
 
   dialog_api:
     image: socnet/dialog-api
@@ -301,15 +273,23 @@ services:
     ports:
       - "8081:8080"
 
+  nginx:
+    image: nginx:1.27.2-alpine
+    cpus: 0.25
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - type: bind
+        source: infrastructure/nginx/nginx.conf
+        target: /etc/nginx/nginx.conf
+
 volumes:
   postgresql_data:
   postgresql2_data:
   postgresql3_data:
   redis_data:
   influxdb_data:
-  citus_data:
-  citus_worker_1_data:
-  citus_worker_2_data:
   rabbitmq1_data:
   rabbitmq2_data:
   tarantool_data:
