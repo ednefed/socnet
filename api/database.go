@@ -82,6 +82,10 @@ func dbGetUserByID(id int64) (User, error) {
 }
 
 func dbGetUsersByFistAndLastName(firstName, lastName string) ([]PrintableUser, error) {
+	if err := db3.Ping(); err != nil {
+		db3 = connectToDB(dsnSlave2Host, dsnSlave2Port, dsnDb, dsnUsername, dsnPassword, dsnSslMode)
+	}
+
 	query := "SELECT id, first_name, last_name, birthdate, gender, interests, city FROM public.users WHERE first_name like $1 || '%' and last_name like $2 || '%'"
 	var users []PrintableUser
 	rows, err := db3.Query(query, firstName, lastName)
