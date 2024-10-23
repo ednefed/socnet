@@ -9,10 +9,10 @@ import (
 var secret = []byte("secret")
 
 func main() {
-	tarantoolHost := getEnvVar("TARANTOOL_HOST", "localhost")
-	tarantoolPort := getEnvVar("TARANTOOL_PORT", "3301")
-	tarantoolUsername := getEnvVar("TARANTOOL_USERNAME", "guest")
-	tt = connectToTarantool(tarantoolHost, tarantoolPort, tarantoolUsername)
+	redisHost := getEnvVar("REDIS_HOST", "localhost")
+	redisPort := getEnvVar("REDIS_PORT", "6379")
+	redisPassword := getEnvVar("REDIS_PASSWORD", "")
+	cache = connectToRedis(redisHost, redisPort, redisPassword)
 
 	rabbitmqHost := getEnvVar("RABBITMQ_HOST", "localhost")
 	rabbitmqPort := getEnvVar("RABBITMQ_PORT", "5672")
@@ -29,8 +29,7 @@ func main() {
 	}
 
 	router := gin.Default()
-	router.POST("/api/v2/dialog/:id", createDialogMessage)
-	router.GET("/api/v2/dialog/:id", getDialogMessages)
+	router.GET("/api/v2/counter/:id", getUnreadMessagesCount)
 	serverHost := getEnvVar("SERVER_HOST", "0.0.0.0")
 	serverPort := getEnvVar("SERVER_PORT", "8080")
 	server := fmt.Sprintf("%v:%v", serverHost, serverPort)

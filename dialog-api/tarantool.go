@@ -34,19 +34,35 @@ func connectToTarantool(host string, port string, username string) *tarantool.Co
 	return connection
 }
 
-func tarantoolCreateMessage(message Message) (Message, error) {
-	query := fmt.Sprintf("box.space.dialogs:auto_increment{%s, %s, '%s', '%s'}", strconv.FormatInt(message.FromUserID, 10), strconv.FormatInt(message.ToUserID, 10), message.Message, message.CreatedAt)
+func tarantoolCreateMessage(message Message) (int64, error) {
+	query := fmt.Sprintf(
+		"return box.space.dialogs:auto_increment{%s, %s, '%s', '%s', %s}",
+		strconv.FormatInt(message.FromUserID, 10),
+		strconv.FormatInt(message.ToUserID, 10),
+		message.Message,
+		message.CreatedAt,
+		strconv.FormatBool(message.Read))
 
-	if _, err := tt.Do(tarantool.NewEvalRequest(query)).Get(); err != nil {
+	raw, err := tt.Do(tarantool.NewEvalRequest(query)).Get()
+
+	if err != nil {
 		log.Printf("tarantoolCreateMessage: %v", err)
-		return message, err
+		return 0, err
 	}
 
-	return message, nil
+	data := raw[0].([]interface{})
+	var ID int64
+
+	if ID, err = convertTarantoolIntToInt64(data[0]); err != nil {
+		log.Printf("tarantoolSelectFromDialogs.convertTarantoolIntToInt64.ID: %v", err)
+		return 0, err
+	}
+
+	return ID, nil
 }
 
 func tarantoolSelectFromDialogs(query string) ([]Message, error) {
-	var messages []Message
+	messages := make([]Message, 0)
 	raw, err := tt.Do(tarantool.NewEvalRequest(query)).Get()
 
 	if err != nil {
@@ -57,23 +73,30 @@ func tarantoolSelectFromDialogs(query string) ([]Message, error) {
 	data := raw[0].([]interface{})
 
 	for _, item := range data {
-		var fromUserID, toUserID int64
+		var ID, fromUserID, toUserID int64
+
+		if ID, err = convertTarantoolIntToInt64(item.([]interface{})[0]); err != nil {
+			log.Printf("tarantoolSelectFromDialogs.convertTarantoolIntToInt64.ID: %v", err)
+			return nil, err
+		}
 
 		if fromUserID, err = convertTarantoolIntToInt64(item.([]interface{})[1]); err != nil {
-			log.Printf("tarantoolSelectFromDialogs.convertTarantoolIntToInt64: %v", err)
+			log.Printf("tarantoolSelectFromDialogs.convertTarantoolIntToInt64.fromUserID: %v", err)
 			return nil, err
 		}
 
 		if toUserID, err = convertTarantoolIntToInt64(item.([]interface{})[2]); err != nil {
-			log.Printf("tarantoolSelectFromDialogs.convertTarantoolIntToInt64: %v", err)
+			log.Printf("tarantoolSelectFromDialogs.convertTarantoolIntToInt64.toUserID: %v", err)
 			return nil, err
 		}
 
 		message := Message{
+			ID:         ID,
 			FromUserID: fromUserID,
 			ToUserID:   toUserID,
 			Message:    item.([]interface{})[3].(string),
 			CreatedAt:  item.([]interface{})[4].(string),
+			Read:       item.([]interface{})[5].(bool),
 		}
 
 		messages = append(messages, message)
@@ -111,4 +134,18 @@ func tarantoolGetDialogMessages(userID int64, friendID int64) ([]Message, error)
 	})
 
 	return messages, nil
+}
+
+func tarantoolSetDialogMessgesRead(IDs []int64, value bool) error {
+	for _, ID := range IDs {
+		query := fmt.Sprintf("box.space.dialogs:update(%s, {{'=', 'read', %s}})", strconv.FormatInt(ID, 10), strconv.FormatBool(value))
+		if _, err := tt.Do(tarantool.NewEvalRequest(query)).Get(); err != nil {
+			log.Printf("tarantoolSetDialogMessgesRead: %v", err)
+			return err
+		}
+	}
+
+	log.Printf("tarantoolSetDialogMessgesRead: marked IDs %v as %v", IDs, value)
+
+	return nil
 }

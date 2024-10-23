@@ -6,6 +6,7 @@ box.once("bootstrap", function()
         { name = 'to', type = 'unsigned' },
         { name = 'message', type = 'string' },
         { name = 'created_at', type = 'string' },
+        { name = 'read', type = 'boolean' },
     })
     box.space.dialogs:create_index('id', { type = 'TREE', parts = { {'id', 'unsigned'} } })
     box.space.dialogs:create_index('from_to', { type = 'TREE', unique = false, parts = { { 'from', 'unsigned' }, { 'to', 'unsigned' } } })
