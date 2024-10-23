@@ -45,8 +45,10 @@ func createDialogMessage(c *gin.Context) {
 	message.FromUserID = userID
 	message.ToUserID = friendID
 	message.CreatedAt = time.Now().Format(time.RFC3339)
+	message.Read = false
+	ID, err := tarantoolCreateMessage(message)
 
-	if _, err := tarantoolCreateMessage(message); err != nil {
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Server error"})
 		log.Printf("request-id: %s, createDialogMessage.tarantoolCreateMessage: %v", xRequestID, err)
 		return
@@ -54,6 +56,18 @@ func createDialogMessage(c *gin.Context) {
 
 	log.Printf("request-id: %s, createDialogMessage: Message sent", xRequestID)
 	c.JSON(http.StatusOK, gin.H{"message": "Message sent"})
+
+	// increment unread count
+	operation := Operation{
+		FromUserID: userID,
+		ToUserID:   friendID,
+		Operation:  "increment",
+		IDs:        []int64{ID},
+	}
+
+	if err := queuePublishOperation(operation); err != nil {
+		log.Printf("createDialogMessage.queuePublishOperation: %v", err)
+	}
 }
 
 func getDialogMessages(c *gin.Context) {
@@ -91,4 +105,37 @@ func getDialogMessages(c *gin.Context) {
 
 	log.Printf("request-id: %s, getDialogMessages: Messages received", xRequestID)
 	c.JSON(http.StatusOK, messages)
+
+	// decrement unread count saga
+	unreads := make([]int64, 0)
+
+	for _, message := range messages {
+		if message.ToUserID == userID && !message.Read {
+			unreads = append(unreads, message.ID)
+		}
+	}
+
+	if len(unreads) == 0 {
+		return
+	}
+
+	tarantoolSetDialogMessgesRead(unreads, true)
+
+	operation := Operation{
+		FromUserID: friendID,
+		ToUserID:   userID,
+		Operation:  "decrement",
+		IDs:        unreads,
+	}
+
+	if err := queuePublishOperation(operation); err != nil {
+		log.Printf("getDialogMessages.queuePublishOperation: %v", err)
+	}
+
+	// TODO: handle failure
+	counterApiFailure := false
+
+	if counterApiFailure {
+		tarantoolSetDialogMessgesRead(unreads, false)
+	}
 }
