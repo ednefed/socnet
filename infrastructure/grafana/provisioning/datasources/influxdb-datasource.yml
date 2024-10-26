@@ -6,6 +6,8 @@ deleteDatasources:
     orgId: 1
   - name: telegraf
     orgId: 1
+  - name: prometheus
+    orgId: 1
 
 datasources:
   - name: jmeter
@@ -18,3 +20,7 @@ datasources:
     access: proxy
     database: telegraf
     url: http://influxdb:8086
+  - name: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090

@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
+	"github.com/penglongli/gin-metrics/ginmetrics"
 )
 
 var secret = []byte("secret")
@@ -76,6 +77,10 @@ func main() {
 	}
 
 	router := gin.Default()
+	metrics := ginmetrics.GetMonitor()
+	metrics.SetMetricPath("/metrics")
+	metrics.SetDuration([]float64{0.01, 0.1, 0.3, 1.2, 5, 10})
+	metrics.Use(router)
 	router.POST("/user", signup)
 	router.GET("/user/:id", getUserByID)
 	router.POST("/login", login)
