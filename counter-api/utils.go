@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -53,7 +54,7 @@ func getUserIDFromContext(c *gin.Context) (int64, error) {
 	if !exists {
 		msg := "getUserIDFromContext: user_id not present in context"
 		log.Println(msg)
-		return 0, fmt.Errorf(msg)
+		return 0, errors.New(msg)
 	}
 
 	userID, err := strconv.ParseInt(userIDAny.(string), 10, 64)
@@ -61,7 +62,7 @@ func getUserIDFromContext(c *gin.Context) (int64, error) {
 	if err != nil {
 		msg := "getUserIDFromContext: user_id is not an int64"
 		log.Println(msg)
-		return 0, fmt.Errorf(msg)
+		return 0, errors.New(msg)
 	}
 
 	return userID, nil

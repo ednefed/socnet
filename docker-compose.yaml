@@ -295,6 +295,17 @@ services:
         source: infrastructure/nginx/nginx.conf
         target: /etc/nginx/nginx.conf
 
+  prometheus:
+    image: prom/prometheus:latest
+    cpus: 0.25
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - type: bind
+        source: infrastructure/prometheus/prometheus.yml
+        target: /etc/prometheus/prometheus.yml
+
 volumes:
   postgresql_data:
   postgresql2_data:

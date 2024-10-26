@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"github.com/penglongli/gin-metrics/ginmetrics"
 )
 
 var secret = []byte("secret")
@@ -29,6 +30,10 @@ func main() {
 	}
 
 	router := gin.Default()
+	metrics := ginmetrics.GetMonitor()
+	metrics.SetMetricPath("/metrics")
+	metrics.SetDuration([]float64{0.01, 0.1, 0.3, 1.2, 5, 10})
+	metrics.Use(router)
 	router.GET("/api/v2/counter/:id", getUnreadMessagesCount)
 	serverHost := getEnvVar("SERVER_HOST", "0.0.0.0")
 	serverPort := getEnvVar("SERVER_PORT", "8080")
